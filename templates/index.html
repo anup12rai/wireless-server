@@ -1,0 +1,104 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>ESP8266 WiFi Manager</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+
+            <span class="logo">JARVIC</span>
+
+            <span class="device">ESP8266 CONTROL</span>
+
+        </div>
+
+        <h1>Wi-Fi Manager</h1>
+
+        <p class="subtitle">
+            Configure your ESP8266 wireless connection.
+        </p>
+
+        <form id="configForm">
+
+            <div class="input-group">
+
+                <label>Board Name</label>
+
+                <input
+                    type="text"
+                    id="boardName"
+                    value="esp8266-ani"
+                    maxlength="32"
+                    placeholder="esp8266-ani"
+                    required
+                >
+
+            </div>
+
+            <div class="input-group">
+
+                <label>Wi-Fi Name</label>
+
+                <input
+                    type="text"
+                    id="ssid"
+                    maxlength="32"
+                    placeholder="Enter Wi-Fi name"
+                    required
+                >
+
+            </div>
+
+            <div class="input-group">
+
+                <label>Wi-Fi Password</label>
+
+                <input
+                    type="password"
+                    id="password"
+                    minlength="8"
+                    maxlength="63"
+                    placeholder="Enter Wi-Fi password"
+                    required
+                >
+
+            </div>
+
+            <button type="submit" id="saveButton">
+
+                Save & Connect
+
+            </button>
+
+        </form>
+
+        <div id="result"></div>
+
+        <div class="footer">
+
+            ESP8266 Wi-Fi Configuration System
+
+        </div>
+
+    </div>
+
+    <script src="/static/app.js"></script>
+
+</body>
+
+</html>
