@@ -9,7 +9,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>ESP8266 WiFi Manager</title>
+    <title>JARVIC WiFi Manager</title>
 
     <link rel="stylesheet" href="/static/style.css">
 
@@ -37,14 +37,14 @@
 
             <div class="input-group">
 
-                <label>Board Name</label>
+                <label for="boardName">Board Name</label>
 
                 <input
                     type="text"
                     id="boardName"
                     value="esp8266-ani"
                     maxlength="32"
-                    placeholder="esp8266-ani"
+                    placeholder="Enter board name"
                     required
                 >
 
@@ -52,7 +52,7 @@
 
             <div class="input-group">
 
-                <label>Wi-Fi Name</label>
+                <label for="ssid">Wi-Fi Name</label>
 
                 <input
                     type="text"
@@ -66,7 +66,7 @@
 
             <div class="input-group">
 
-                <label>Wi-Fi Password</label>
+                <label for="password">Wi-Fi Password</label>
 
                 <input
                     type="password"
@@ -87,7 +87,7 @@
 
         </form>
 
-        <div id="result"></div>
+        <div id="result" role="status"></div>
 
         <div class="footer">
 

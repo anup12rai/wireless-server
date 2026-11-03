@@ -4,67 +4,78 @@ import requests
 
 app = Flask(__name__)
 
-ESP_IP = "192.168.4.1"
-ESP_URL = f"http://{ESP_IP}"
+ESP8266_IP = "192.168.4.1"
 
 
 @app.route("/")
-def home():
+def index():
     return render_template("index.html")
 
 
-# Send configuration to ESP8266
 @app.route("/api/config", methods=["POST"])
 def configure_esp():
 
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "success": False,
+            "message": "Invalid request."
+        }), 400
+
+    board_name = data.get("boardName", "").strip()
+    ssid = data.get("ssid", "").strip()
+    password = data.get("password", "")
+
+    if not board_name or not ssid or not password:
+        return jsonify({
+            "success": False,
+            "message": "All fields are required."
+        }), 400
+
+    if len(ssid) > 32 or len(password) < 8 or len(password) > 63:
+        return jsonify({
+            "success": False,
+            "message": "Invalid Wi-Fi credentials."
+        }), 400
+
+    if len(board_name) > 32:
+        return jsonify({
+            "success": False,
+            "message": "Board name is too long."
+        }), 400
+
     try:
-        data = request.get_json()
 
         response = requests.post(
-            f"{ESP_URL}/config",
-            json=data,
-            timeout=8
+            f"http://{ESP8266_IP}/connect",
+            data={
+                "boardName": board_name,
+                "ssid": ssid,
+                "password": password
+            },
+            timeout=10
         )
 
-        return jsonify(response.json()), response.status_code
-
-    except requests.exceptions.RequestException as error:
+        response.raise_for_status()
 
         return jsonify({
-            "message": "Cannot connect to ESP8266.",
-            "error": str(error)
-        }), 503
+            "success": True,
+            "message": "Credentials sent to ESP8266. Connecting to Wi-Fi..."
+        })
 
-
-# Get ESP8266 status
-@app.route("/api/status")
-def esp_status():
-
-    try:
-        response = requests.get(
-            f"{ESP_URL}/status",
-            timeout=5
-        )
-
-        return jsonify(response.json())
-
-    except requests.exceptions.RequestException:
+    except requests.RequestException as error:
 
         return jsonify({
-            "connected": False,
-            "message": "ESP8266 is unavailable."
+            "success": False,
+            "message": "Cannot communicate with ESP8266. Check the setup Wi-Fi connection."
         }), 503
 
 
 if __name__ == "__main__":
 
-    print("================================")
-    print("JARVIC ESP8266 WIFI DASHBOARD")
-    print("================================")
-    print("Dashboard: http://127.0.0.1:5000")
-
     app.run(
-        host="127.0.0.1",
+        host="0.0.0.0",
         port=5000,
         debug=False
     )

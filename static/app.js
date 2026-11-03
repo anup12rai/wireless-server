@@ -1,50 +1,33 @@
 
-const form = document.getElementById("configForm");
+const configForm = document.getElementById("configForm");
+
+const saveButton = document.getElementById("saveButton");
 
 const result = document.getElementById("result");
 
-const button = document.getElementById("saveButton");
 
-
-form.addEventListener("submit", async function(event) {
+configForm.addEventListener("submit", async function (event) {
 
     event.preventDefault();
 
-    const settings = {
+    const boardName = document.getElementById("boardName").value.trim();
 
-        boardName: document.getElementById("boardName").value.trim(),
+    const ssid = document.getElementById("ssid").value.trim();
 
-        ssid: document.getElementById("ssid").value.trim(),
+    const password = document.getElementById("password").value;
 
-        password: document.getElementById("password").value
+    if (!boardName || !ssid || !password) {
 
-    };
-
-
-    if (!settings.boardName || !settings.ssid) {
-
-        result.textContent = "Please fill in all fields.";
-
+        result.textContent = "Please complete all fields.";
         return;
 
     }
 
-    if (settings.password.length < 8 ||
-        settings.password.length > 63) {
+    saveButton.disabled = true;
 
-        result.textContent =
-            "Wi-Fi password must contain 8 to 63 characters.";
+    saveButton.textContent = "Connecting...";
 
-        return;
-
-    }
-
-
-    button.disabled = true;
-
-    button.textContent = "Connecting...";
-
-    result.textContent = "Sending settings to ESP8266...";
+    result.textContent = "Sending Wi-Fi credentials to JARVIC...";
 
 
     try {
@@ -54,42 +37,49 @@ form.addEventListener("submit", async function(event) {
             method: "POST",
 
             headers: {
-
                 "Content-Type": "application/json"
-
             },
 
-            body: JSON.stringify(settings)
+            body: JSON.stringify({
+
+                boardName: boardName,
+
+                ssid: ssid,
+
+                password: password
+
+            })
 
         });
 
 
         const data = await response.json();
 
-
         if (!response.ok) {
 
-            throw new Error(data.message || "Configuration failed");
+            throw new Error(data.message || "Connection request failed.");
 
         }
 
-
         result.textContent = data.message;
+
+        result.style.color = "green";
 
     }
 
-    catch(error) {
+    catch (error) {
 
-        result.textContent =
-            "Error: " + error.message;
+        result.textContent = error.message;
+
+        result.style.color = "red";
 
     }
 
     finally {
 
-        button.disabled = false;
+        saveButton.disabled = false;
 
-        button.textContent = "Save & Connect";
+        saveButton.textContent = "Save & Connect";
 
     }
 
