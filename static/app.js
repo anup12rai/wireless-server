@@ -1,86 +1,161 @@
 
-const configForm = document.getElementById("configForm");
+const ESP_URL = window.location.origin;
 
+const form = document.getElementById("wifiForm");
 const saveButton = document.getElementById("saveButton");
+const statusElement = document.getElementById("status");
+const networkElement = document.getElementById("network");
+const ipElement = document.getElementById("ip");
 
-const result = document.getElementById("result");
+function showStatus(message) {
+    if (statusElement) {
+        statusElement.textContent = message;
+    }
+}
 
+// ============== SAVE WIFI ==============
 
-configForm.addEventListener("submit", async function (event) {
+async function saveWiFi(event) {
 
-    event.preventDefault();
-
-    const boardName = document.getElementById("boardName").value.trim();
-
-    const ssid = document.getElementById("ssid").value.trim();
-
-    const password = document.getElementById("password").value;
-
-    if (!boardName || !ssid || !password) {
-
-        result.textContent = "Please complete all fields.";
-        return;
-
+    if (event) {
+        event.preventDefault();
     }
 
-    saveButton.disabled = true;
+    const ssidElement = document.getElementById("ssid");
+    const passwordElement = document.getElementById("password");
 
-    saveButton.textContent = "Connecting...";
+    if (!ssidElement || !passwordElement) {
+        showStatus("Wi-Fi input fields not found.");
+        return;
+    }
 
-    result.textContent = "Sending Wi-Fi credentials to JARVIC...";
+    const ssid = ssidElement.value.trim();
+    const password = passwordElement.value;
 
+    if (!ssid) {
+        showStatus("Please enter your Wi-Fi name.");
+        return;
+    }
+
+    if (password.length > 0 && password.length < 8) {
+        showStatus("Wi-Fi password must be at least 8 characters.");
+        return;
+    }
+
+    if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = "Connecting...";
+    }
+
+    showStatus("Sending Wi-Fi details to ESP8266...");
 
     try {
 
-        const response = await fetch("/api/config", {
+        const response = await fetch(
+            ESP_URL + "/api/config",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    ssid: ssid,
+                    password: password
+                })
+            }
+        );
 
-            method: "POST",
+        const result = await response.json();
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+        if (!response.ok) {
+            throw new Error(result.message || "Request failed");
+        }
 
-            body: JSON.stringify({
+        showStatus(result.message);
 
-                boardName: boardName,
+        // Start checking the connection status
+        updateStatus();
 
-                ssid: ssid,
+    } catch (error) {
 
-                password: password
+        console.error("Wi-Fi configuration error:", error);
 
-            })
+        showStatus(
+            "Failed to fetch: " +
+            (error.message || "Cannot connect to ESP8266")
+        );
 
-        });
+    } finally {
 
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.textContent = "Save & Connect";
+        }
+
+    }
+
+}
+
+// ============== CHECK STATUS ==============
+
+async function updateStatus() {
+
+    try {
+
+        const response = await fetch(
+            ESP_URL + "/api/status",
+            {
+                method: "GET",
+                cache: "no-store"
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Status request failed");
+        }
 
         const data = await response.json();
 
-        if (!response.ok) {
+        showStatus(data.message || "ESP8266 is online");
 
-            throw new Error(data.message || "Connection request failed.");
+        if (networkElement) {
+
+            networkElement.textContent =
+                "Wi-Fi: " + (data.ssid || "Not connected");
 
         }
 
-        result.textContent = data.message;
+        if (ipElement) {
 
-        result.style.color = "green";
+            ipElement.textContent =
+                "IP Address: " + (data.ip || "Not connected");
 
-    }
+        }
 
-    catch (error) {
+    } catch (error) {
 
-        result.textContent = error.message;
+        console.error("Status error:", error);
 
-        result.style.color = "red";
-
-    }
-
-    finally {
-
-        saveButton.disabled = false;
-
-        saveButton.textContent = "Save & Connect";
+        showStatus("ESP8266 is not responding.");
 
     }
 
-});
+}
+
+// ============== EVENT LISTENERS ==============
+
+if (form) {
+
+    form.addEventListener("submit", saveWiFi);
+
+} else if (saveButton) {
+
+    saveButton.addEventListener("click", saveWiFi);
+
+}
+
+// Update status every 3 seconds
+
+updateStatus();
+
+setInterval(updateStatus, 3000);
